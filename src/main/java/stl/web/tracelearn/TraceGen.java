@@ -8,15 +8,12 @@ import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.*;
-
 import com.crawljax.core.CrawlSession;
 import com.crawljax.core.ExitNotifier.ExitStatus;
 import com.crawljax.core.plugin.HostInterface;
 import com.crawljax.core.plugin.PostCrawlingPlugin;
 import com.crawljax.core.state.Eventable;
 import com.crawljax.core.state.StateFlowGraph;
-import com.crawljax.core.state.StateVertex;
 import com.crawljax.plugins.crawloverview.model.*;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;

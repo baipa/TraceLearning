@@ -22,6 +22,10 @@ public class Sampling {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(Sampling.class);
 	
+	public Sampling(){
+		
+	}
+	
 	public Sampling(List<FeatureVec> vectors, ImmutableMap<String, State> state, ImmutableMap<Integer, Edge> edge){
 		this.vectors = vectors;
 		
