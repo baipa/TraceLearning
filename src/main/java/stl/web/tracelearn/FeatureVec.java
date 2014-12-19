@@ -8,19 +8,33 @@ public class FeatureVec {
 
 	private List<Eventable> trace;
 	private Map<Integer, Integer> featureVector;
-	private long NumberOfTotalEdges; 
+	private long NumberOfTotalEdges;
+	private int id;
 	
-	public FeatureVec(List<Eventable> p, long NumberOfEdges){
+	public FeatureVec(List<Eventable> p, long NumberOfEdges, int id){
 		trace = p;
+		this.id = id;
 		NumberOfTotalEdges = NumberOfEdges;
 		featureVector = new TreeMap<>();
 		addTransition();	//edge transition, index: 0 ~ total # edges - 1
 		addTraceInfo();		//# edges, same state, ..., index: total # edges ~
 	}
 	
+	public FeatureVec(String str){
+		
+		featureVector = new TreeMap<>();
+		
+		String[] index = str.split(" ");
+		
+		for(String s : index){
+			String[] key = s.split(":");
+			featureVector.put(Integer.valueOf(key[0]), Integer.valueOf(key[1]));
+		}
+	}
+	
 	private void addTraceInfo() {
 		featureVector.put((int) NumberOfTotalEdges, trace.size());
-		featureVector.put(hasSameState(), trace.size() + 1);
+		featureVector.put((int) NumberOfTotalEdges + 1, hasSameState());
 	}
 
 	private Integer hasSameState() {
@@ -45,6 +59,10 @@ public class FeatureVec {
 		}
 	}
 	
+	public int getId(){
+		return id;
+	}
+	
 	public List<Eventable> getTrace(){
 		return trace;
 	}
@@ -54,7 +72,7 @@ public class FeatureVec {
 	}
 	
 	public String toString(){
-		String str = "";
+		String str = id + " ";
 		for(Integer key : featureVector.keySet()){
 			str += key + ":" + featureVector.get(key) + " ";
 		}
