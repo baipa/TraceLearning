@@ -10,6 +10,8 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import stl.web.tracelearn.feature.FeatureVec;
+
 import com.crawljax.core.CrawlSession;
 import com.crawljax.core.ExitNotifier.ExitStatus;
 import com.crawljax.core.plugin.HostInterface;
@@ -24,6 +26,7 @@ import com.google.common.collect.ImmutableMap.Builder;
 public class TraceGen implements PostCrawlingPlugin {
 
 	private File OUTPUT_DIR;
+	private File TRACE_DIR;
 	
 	private List<FeatureVec> vectors;
 
@@ -40,8 +43,8 @@ public class TraceGen implements PostCrawlingPlugin {
 	public void postCrawling(CrawlSession session, ExitStatus exitReason) {
 
 		// make testcases dir
-		File trace_dir = new File(OUTPUT_DIR, "trace");
-		boolean created = trace_dir.mkdir();
+		TRACE_DIR = new File(OUTPUT_DIR, "trace");
+		boolean created = TRACE_DIR.mkdir();
 		checkArgument(created, "Could not create trace dir");
 
 		//add edge id & edge json
@@ -69,48 +72,48 @@ public class TraceGen implements PostCrawlingPlugin {
 		Collection<List<Eventable>> testcases = session.getCrawlPaths();
 		
 		
-		//transfrom trace to vectors, add into list
+		//transform trace to vectors, add into list
 		vectors = new ArrayList<>();
 		int i = 1;
-		String vecstr = "";
 		for (List<Eventable> p : testcases) {
 			FeatureVec v = new FeatureVec(p, id, i);
 			vectors.add(v);
 			
-			vecstr += v.toString() + "\n";
+			String s = "{\n  \"states\" : " + getStateJson(p)
+					+ ",\n  \"edges\" : " + getEdgeJson(p) + "\n}";
 			
-			try {
-				FileWriter out = new FileWriter(new File(trace_dir, i + ".json"));
-				String s = "{\n  \"states\" : " + getStateJson(p) + ",\n  \"edges\" : " + getEdgeJson(p) + "\n}";
-				out.write(s);
-				out.flush();
-				out.close();
-			} catch (IOException e) {
-				LOG.error("Cannot write file: " + i + ".json");
-			}
-			
+			writeFile(i + ".json", s);
 			i++;
 		}
 		
+		//feature extraction/selection
+		
+		
 		//write vector_list file
-		try {
-			FileWriter out = new FileWriter(new File(trace_dir, "vector_list"));
-			out.write(vecstr);
-			out.flush();
-			out.close();
-		} catch (IOException e) {
-			LOG.error("Cannot write file: vector_list");
-		}
-		
-		
-		
-		
-		
-		
-		
+		String vecstr = vecListToString();
+		writeFile("vector_list", vecstr);
 		
 	}
 
+	private void writeFile(String filename, String str){
+		try {
+			FileWriter out = new FileWriter(new File(TRACE_DIR, filename));
+			out.write(str);
+			out.flush();
+			out.close();
+		} catch (IOException e) {
+			LOG.error("Cannot write file: " + filename);
+		}
+	}
+	
+	private String vecListToString(){
+		String vecstr = "";
+		for(FeatureVec v : vectors){
+			vecstr += v.toString() + "\n";
+		}
+		return vecstr;
+	}
+	
 	private String getStateJson(List<Eventable> trace) {
 		Builder<String, State> builder = ImmutableMap.builder();
 		List<String> names = new ArrayList<>();

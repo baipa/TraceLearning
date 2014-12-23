@@ -1,17 +1,12 @@
 package stl.web.tracelearn.label;
 
+import java.io.*;
 import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import stl.web.tracelearn.FeatureVec;
-
-import com.crawljax.core.state.Eventable;
-import com.crawljax.plugins.crawloverview.model.*;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
+import stl.web.tracelearn.feature.FeatureVec;
 
 public class Sampling {
 
@@ -19,80 +14,68 @@ public class Sampling {
 	private List<Integer> unlabeled;
 
 	private List<FeatureVec> vectors;
-	private ImmutableMap<String, State> states;
-	private ImmutableMap<Integer, Edge> edges;
+	
 
 	private static final Logger LOG = LoggerFactory.getLogger(Sampling.class);
 
+	private static final String TRACE_DIR = "C:/lab/demo.crawljax.com/trace/";
+	
 	public Sampling() {
 
 		// read feature vectors
 		vectors = new ArrayList<>();
-		
+		readFile();
 		
 		// initialize labeled & unlabeled sets
 		labeled = new TreeMap<>();
 		unlabeled = new ArrayList<Integer>();
-		for (int i = 0; i < vectors.size(); i = i + 1) {
-			unlabeled.add(i);
+		for (FeatureVec v : vectors) {
+			unlabeled.add(v.getId());
 		}
 
 	}
 
-	/*
-	public Sampling(List<FeatureVec> vectors,
-			ImmutableMap<String, State> state, ImmutableMap<Integer, Edge> edge) {
-		this.vectors = vectors;
 
-		// initialize labeled & unlabeled sets
-		labeled = new TreeMap<>();
-		unlabeled = new ArrayList<Integer>();
-		for (int i = 0; i < vectors.size(); i = i + 1) {
-			unlabeled.add(i);
+	private void readFile() {
+		try {
+			
+			BufferedReader br = new BufferedReader(new FileReader(new File(TRACE_DIR, "vector_list")));
+			String line;
+			while ((line = br.readLine()) != null) {
+				FeatureVec v = new FeatureVec(line);
+				vectors.add(v);
+			}
+			br.close();
+			
+		} catch (IOException e) {
+			LOG.error("Cannot read file: vector_list");
 		}
-
-		// get json
-		states = state;
-		edges = edge;
 	}
-	*/
 
-	public void getNextTrace() {
+	public String getNextTrace() {
 
 		// randomly get next trace
-		Random randomizer = new Random();
-		int id = unlabeled.get(randomizer.nextInt(unlabeled.size()));
+		int id = randAlgo();
 
 		// send trace info to client
-		String s = getStateJson(vectors.get(id).getTrace());
-		String e = getEdgeJson(vectors.get(id).getTrace());
-
-		LOG.info("State JSON: " + s);
-		LOG.info("Edge JSON: " + e);
-
-		// get user label value
-		int label_value = 1;
-
-		labeled.put(id, label_value);
+		return TRACE_DIR + id + ".json";
+	}
+	
+	public void sendValue(String json, int value){
+		//parse the id from file name
+		String[] str = json.split("/");
+		String[] s = str[str.length - 1].split(".");
+		int id = Integer.parseInt(s[0]);
+		
+		labeled.put(id, value);
 		unlabeled.remove(id);
 	}
 
-	private String getStateJson(List<Eventable> trace) {
-		Builder<String, State> builder = ImmutableMap.builder();
-		builder.put("index", states.get("index"));
-		for (Eventable e : trace) {
-			String key = e.getTargetStateVertex().getName();
-			builder.put(key, states.get(key));
-		}
-
-		return Serializer.toPrettyJson(builder.build());
+	private int randAlgo(){
+		
+		Random randomizer = new Random();
+		int id = unlabeled.get(randomizer.nextInt(unlabeled.size()));
+		return id;
 	}
-
-	private String getEdgeJson(List<Eventable> trace) {
-		ImmutableList.Builder<Edge> builder = ImmutableList.builder();
-		for (Eventable e : trace) {
-			builder.add(edges.get((int) e.getId()));
-		}
-		return Serializer.toPrettyJson(builder.build());
-	}
+	
 }

@@ -1,4 +1,4 @@
-package stl.web.tracelearn;
+package stl.web.tracelearn.feature;
 
 import java.util.*;
 
@@ -26,9 +26,14 @@ public class FeatureVec {
 		
 		String[] index = str.split(" ");
 		
-		for(String s : index){
-			String[] key = s.split(":");
+		for(int i = 0; i < index.length; i++){
+			if(i == 0){
+				id = Integer.valueOf(index[i]);
+			}
+			else{
+			String[] key = index[i].split(":");
 			featureVector.put(Integer.valueOf(key[0]), Integer.valueOf(key[1]));
+			}
 		}
 	}
 	
